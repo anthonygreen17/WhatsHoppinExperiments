@@ -1,0 +1,64 @@
+
+
+Experiment #1:    Good
+	- Get API token
+	- Make API requests to BreweryDB
+	- figure out what paths we will use in the application
+
+	- figure out how much data we need to store
+		- possibly, figure out how to put JSON on disk with Elixir
+
+
+
+Experiment #2:    Good
+	- JS Websockets
+		- figure out how to structure channels
+			- "updates/brewery/{brewery.name}"
+			- "updates/beer/{beer.name}"
+
+
+
+
+
+Potential Ideas:
+
+	Experiment:
+		- render data into the form that we want
+		- do we want to take in JSON from API calls and put them into a database?
+
+	Experiment:
+		- figure out how to use search bar
+		- figure out how to index what ur looking at(maybe by first letter?)
+
+
+Other notes:
+
+	- use a forum style where messages are saved forever, with reference to user
+	- 
+
+
+get a certain category:
+http://api.brewerydb.com/v2/category/5/?key=b8858d9cead79d462f430e9726080163
+
+get all categories:
+
+
+Findings:
+
+	- we cant do a GET to all beers (/beers). To get around that, we should have the following structure:
+	- Category:
+		- Style:
+			- Beer:
+
+	every beer has a style, every style has a category, and a GET to /categories is legal. Boom.
+
+
+
+
+	Database stuff:
+
+	Beer Table:
+
+
+
+
