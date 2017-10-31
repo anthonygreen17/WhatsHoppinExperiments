@@ -5,7 +5,7 @@ defmodule BeerData do
 	end
 
 	def api_key() do
-		"?key=b8858d9cead79d462f430e9726080163"
+		?key=KEY
 	end
 
 	@doc """
