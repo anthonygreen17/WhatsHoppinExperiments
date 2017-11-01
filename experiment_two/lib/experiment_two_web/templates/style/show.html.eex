@@ -1,0 +1,43 @@
+<h2 id="style-name" data-style-id="<%= @style.id %>"><%= @style.name %></h2>
+
+<br>
+<h4>New Message</h4>
+<%= form_for @message, message_path(@conn, :create), fn f -> %>
+  <%= if @message.action do %>
+    <div class="alert alert-danger">
+      <p>Oops, something went wrong! Please check the errors below.</p>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%#= label f, :content, class: "control-label" %>
+    <%= text_input f, :content, class: "form-control" %>
+    <%= error_tag f, :content %>
+  </div>
+
+  <%= hidden_input f, :style_id, value: @style.id %>
+
+  <div class="form-group">
+      <%= link "Submit", to: "#",
+                         class: "btn btn-primary submit-button",
+                         id: "submit-button",
+                         data_style_id: "#{@style.id}"%>
+  </div>
+<% end %>
+
+<table class="table">
+  <tbody>
+	<%= for message <- @messages do %>
+		<tr>
+      <td><%= message.content %></td>
+
+      <td class="text-right">
+        <span><%= link "Edit", to: message_path(@conn, :edit, message), class: "btn btn-default btn-xs" %></span>
+        <span><%= link "Delete", to: message_path(@conn, :delete, message), method: :delete, data: [confirm: "Are you sure?"], class: "btn btn-danger btn-xs" %></span>
+      </td>
+    </tr>
+	<% end %>
+	</tbody>
+</table>
+
+<span><%= link "Back", to: style_path(@conn, :index) %></span>

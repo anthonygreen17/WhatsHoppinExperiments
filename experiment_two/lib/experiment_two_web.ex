@@ -40,6 +40,7 @@ defmodule ExperimentTwoWeb do
       import ExperimentTwoWeb.Router.Helpers
       import ExperimentTwoWeb.ErrorHelpers
       import ExperimentTwoWeb.Gettext
+      import ExperimentTwoWeb.Helpers
     end
   end
 

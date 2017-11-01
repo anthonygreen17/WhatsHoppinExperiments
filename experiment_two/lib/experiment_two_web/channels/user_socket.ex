@@ -3,6 +3,7 @@ defmodule ExperimentTwoWeb.UserSocket do
 
   ## Channels
   # channel "room:*", ExperimentTwoWeb.RoomChannel
+  channel "updates:*", ExperimentTwoWeb.UpdatesChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

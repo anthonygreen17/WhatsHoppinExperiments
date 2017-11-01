@@ -4,6 +4,7 @@
 // To use Phoenix channels, the first step is to import Socket
 // and connect at the socket path in "lib/web/endpoint.ex":
 import {Socket} from "phoenix"
+export default socket
 
 let socket = new Socket("/socket", {params: {token: window.userToken}})
 
@@ -54,9 +55,39 @@ let socket = new Socket("/socket", {params: {token: window.userToken}})
 socket.connect()
 
 // Now that you are connected, you can join channels with a topic:
-let channel = socket.channel("topic:subtopic", {})
-channel.join()
-  .receive("ok", resp => { console.log("Joined successfully", resp) })
-  .receive("error", resp => { console.log("Unable to join", resp) })
+function channel_init() {
+	if ($('body').data('page') != "StyleView/show") {
+		return; // wrong page
+	}
 
-export default socket
+	let subtopic = $('h2#style-name').data('style-id');
+	let chan = socket.channel("updates:" + subtopic, {});
+	let submitButtonObject = $("a#submit-button");
+	let submitButton = submitButtonObject[0];
+
+	chan.join(chan)
+	  .receive("ok", resp => { console.log("Joined successfully", resp) })
+	  .receive("error", resp => { console.log("Unable to join", resp) })
+
+	console.log("Joined channel: " + chan.topic);
+
+	chan.on("message", got_message);
+
+	// submitButton.addEventListener("click", test);
+
+	submitButton.addEventListener("click",
+		                            send_message(chan, submitButtonObject));
+}
+
+$(channel_init);
+
+function got_message(msg) {
+	console.log("Got a message: ");
+	console.log(msg);
+}
+
+function send_message(chan, button) {
+	// console.log("hi");
+	chan.push("message", {content: $('#message_content')[0].value,
+		                    style_id: button.data('style-id')})
+}
