@@ -120,6 +120,7 @@ defmodule ExperimentTwo.Beer do
   def list_messages_for_style(style_id) do
     query = from m in Message,
           where: m.style_id == ^style_id,
+          order_by: [desc: m.inserted_at],
           select: m
 
     Repo.all(query)

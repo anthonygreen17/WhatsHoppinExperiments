@@ -14,16 +14,16 @@ defmodule ExperimentTwoWeb.MessageController do
     render(conn, "new.html", changeset: changeset)
   end
 
-  def create(conn, %{"message" => message_params}) do
-    case Beer.create_message(message_params) do
-      {:ok, message} ->
-        conn
-        |> put_flash(:info, "Message created successfully.")
-        |> redirect(to: style_path(conn, :show, message.style_id))
-      {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, "new.html", changeset: changeset)
-    end
-  end
+  # def create(conn, %{"message" => message_params}) do
+  #   case Beer.create_message(message_params) do
+  #     {:ok, message} ->
+  #       conn
+  #       |> put_flash(:info, "Message created successfully.")
+  #       |> redirect(to: style_path(conn, :show, message.style_id))
+  #     {:error, %Ecto.Changeset{} = changeset} ->
+  #       render(conn, "new.html", changeset: changeset)
+  #   end
+  # end
 
   # def show(conn, %{"id" => id}) do
   #   message = Beer.get_message!(id)
@@ -49,12 +49,12 @@ defmodule ExperimentTwoWeb.MessageController do
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    message = Beer.get_message!(id)
-    {:ok, _message} = Beer.delete_message(message)
+  # def delete(conn, %{"id" => id}) do
+  #   message = Beer.get_message!(id)
+  #   {:ok, _message} = Beer.delete_message(message)
 
-    conn
-    |> put_flash(:info, "Message deleted successfully.")
-    |> redirect(to: message_path(conn, :index))
-  end
+  #   conn
+  #   |> put_flash(:info, "Message deleted successfully.")
+  #   |> redirect(to: message_path(conn, :index))
+  # end
 end

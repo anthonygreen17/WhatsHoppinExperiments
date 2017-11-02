@@ -21,19 +21,29 @@
       <%= link "Submit", to: "#",
                          class: "btn btn-primary submit-button",
                          id: "submit-button",
-                         data_style_id: "#{@style.id}"%>
+                         data_style_id: @style.id%>
   </div>
 <% end %>
 
 <table class="table">
-  <tbody>
+  <tbody id="table-body">
 	<%= for message <- @messages do %>
 		<tr>
       <td><%= message.content %></td>
-
       <td class="text-right">
-        <span><%= link "Edit", to: message_path(@conn, :edit, message), class: "btn btn-default btn-xs" %></span>
-        <span><%= link "Delete", to: message_path(@conn, :delete, message), method: :delete, data: [confirm: "Are you sure?"], class: "btn btn-danger btn-xs" %></span>
+        <span><%= link "Edit",
+                  to: message_path(@conn, :edit, message),
+                  class: "btn btn-default btn-xs" %></span>
+        <span><%#= link "Delete",
+                  to: message_path(@conn, :delete, message),
+                  method: :delete,
+                  data: [confirm: "Are you sure?"],
+                  class: "btn btn-danger btn-xs" %></span>
+        <span><%= link "Delete",
+                  to: "#",
+                  data: [confirm: "Are you sure?"],
+                  class: "btn btn-danger btn-xs delete-button",
+                  id: "delete-#{message.id}" %></span>
       </td>
     </tr>
 	<% end %>

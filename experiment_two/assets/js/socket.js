@@ -54,16 +54,17 @@ let socket = new Socket("/socket", {params: {token: window.userToken}})
 
 socket.connect()
 
-// Now that you are connected, you can join channels with a topic:
+let subtopic = $('h2#style-name').data('style-id');
+
 function channel_init() {
 	if ($('body').data('page') != "StyleView/show") {
 		return; // wrong page
 	}
 
-	let subtopic = $('h2#style-name').data('style-id');
 	let chan = socket.channel("updates:" + subtopic, {});
 	let submitButtonObject = $("a#submit-button");
 	let submitButton = submitButtonObject[0];
+	let deleteButtons = $('.delete-button');
 
 	chan.join(chan)
 	  .receive("ok", resp => { console.log("Joined successfully", resp) })
@@ -73,21 +74,41 @@ function channel_init() {
 
 	chan.on("message", got_message);
 
-	// submitButton.addEventListener("click", test);
+	submitButton.addEventListener("click", send_message(chan, submitButtonObject));
 
-	submitButton.addEventListener("click",
-		                            send_message(chan, submitButtonObject));
+	for (var i = 0; i < deleteButtons.length; i++) {
+    deleteButtons[i].addEventListener('click', delete_message(chan, self.id));
+	}
+
+	Array.from(deleteButtons).forEach(function(element) {
+      element.addEventListener('click', delete_message(chan, element.id));
+  });
+
+	// deleteButtons.addEventListener("click", delete_message(chan, self.id));
 }
 
 $(channel_init);
 
 function got_message(msg) {
-	console.log("Got a message: ");
-	console.log(msg);
+	if (msg.style_id == subtopic) {
+		$('tbody').prepend('<tr><td>' + msg.content + '</td><td></td><tr>');
+	}
 }
 
 function send_message(chan, button) {
-	// console.log("hi");
-	chan.push("message", {content: $('#message_content')[0].value,
-		                    style_id: button.data('style-id')})
+	return function() {
+		content = $('#message_content')[0].value;
+		if(content && content.length) {
+			chan.push("message",
+								{content: content,
+		     				 style_id: button.data('style-id')});
+			$('#message_content').val('');
+		}
+	}
+}
+
+function delete_message(chan, id) {
+	return function() {
+		chan.push("delete", {id: parseInt(id.substring(7))});
+	}
 }
