@@ -27,23 +27,40 @@ defmodule BeerData do
 
 		{json_result_list, number_of_pages}
 	"""
-	def get_path(resource) do
+	def get_resource(resource) do
 		# result of Poison.decode/1 is (ex:) {:ok, %{"data": [], "numberOfPages": X}}
-		path(resource) 
-		|> HTTPoison.get!
-		|> (fn(resp) -> Poison.decode(resp.body) end).()
-		|> elem(1)
-		|> 
-		(fn(j) -> 
-			{ Map.get(j, "data"), Map.get(j, "numberOfPages", 1) }
-		end).()
+		path(resource)
+		|> get_path
+		# |> HTTPoison.get!
+		# |> (fn(resp) -> Poison.decode(resp.body) end).()
+		# |> elem(1)
+		# |> 
+		# (fn(j) -> 
+		# 	{ Map.get(j, "data"), Map.get(j, "numberOfPages", 1) }
+		# end).()
 	end
 
 	@doc """
-	Similar to get_path/1, except use the passed-in string as the full path.
+	Do a GET request to the specified path, adding the key/value pair after the
+	api_key() with &key=value
+	"""
+	def get_resource(resource, key, value) do
+		path(resource, key, value)
+		|> get_path
+		# |> HTTPoison.get!
+		# |> (fn(resp) -> Poison.decode(resp.body) end).()
+		# |> elem(1)
+		# |> 
+		# (fn(j) -> 
+		# 	{ Map.get(j, "data"), Map.get(j, "numberOfPages", 1) } 
+		# end).()
+	end
+
+	@doc """
+	Similar to get_resource/1, except use the passed-in string as the full path.
 	Don't modify it.
 	"""
-	def get_path_full(full_path) do
+	def get_path(full_path) do
 		full_path
 		|> HTTPoison.get!
 		|> (fn(resp) -> Poison.decode(resp.body) end).()
@@ -51,21 +68,6 @@ defmodule BeerData do
 		|> 
 		(fn(j) -> 
 			{ Map.get(j, "data"), Map.get(j, "numberOfPages", 1) }
-		end).()
-	end
-
-	@doc """
-	Do a GET request to the specified path, adding the key/value pair after the
-	api_key() with &key=value
-	"""
-	def get_path(resource, key, value) do
-		path(resource, key, value)
-		|> HTTPoison.get!
-		|> (fn(resp) -> Poison.decode(resp.body) end).()
-		|> elem(1)
-		|> 
-		(fn(j) -> 
-			{ Map.get(j, "data"), Map.get(j, "numberOfPages", 1) } 
 		end).()
 	end
 
@@ -98,7 +100,7 @@ defmodule BeerData do
 	def get_all_pages_helper(acc, path, 1) do
 		new_data = 
 		add_attr_to_path(path, "p", 1)
-		|> get_path_full
+		|> get_path
 		|> elem(0)
 		acc ++ new_data
 	end
@@ -107,7 +109,7 @@ defmodule BeerData do
 		IO.puts("Getting page #{page_num}")
 		new_data = 
 		add_attr_to_path(path, "p", page_num)
-		|> get_path_full
+		|> get_path
 		|> elem(0)
 		acc = acc ++ new_data
 		get_all_pages_helper(acc, path, page_num - 1)
@@ -126,7 +128,7 @@ defmodule BeerData do
 	"""
 	def get_beers_with_style(%{"name" => name, "id" => id}) do
 		IO.puts("\n\nbeers with style #{name}:")
-		res = get_path("beers", "styleId", id)
+		res = get_resource("beers", "styleId", id)
 
 		case num_pages = elem(res, 1) do
 			1 -> res
@@ -145,36 +147,31 @@ HTTPoison.start
 
 # # first, print all the categories
 # IO.puts("\n\nAll categories...")
-# BeerData.get_path("categories")
+# BeerData.get_resource("categories")
 # |> BeerData.print_by_name_and_id
 
 
 # # get a category by id
-# IO.puts("\n\nGet category by id...")
-# BeerData.get_by_id("category", 5)
-# |> BeerData.print_by_name_and_id
-
-
-# print all the styles
-IO.puts("\n\nAll styles...")
-styles = BeerData.get_path("styles")
-# BeerData.print_by_name_and_id(styles)
+IO.puts("\n\nGet category by id...")
+BeerData.get_by_id("category", 5)
+|> BeerData.print_by_name_and_id
 
 # # get a style by ID
-# IO.puts("\n\nGet style by id...")
-# BeerData.get_by_id("style", 3)
-# |> BeerData.print_by_name_and_id
+IO.puts("\n\nGet style by id...")
+BeerData.get_by_id("style", 3)
+|> BeerData.print_by_name_and_id
 
 # iterate through the styles, printing all of the beers within each style
-# Enum.map(styles, 
-# 	fn(s) -> 
-# 		s
-# 		|> BeerData.get_beers_with_style
-# 		|> BeerData.print_by_name_and_id
-# 	end
-# )
-# Enum.at(styles, 2)
-# |> BeerData.get_beers_with_style
+IO.puts("\n\nAll styles...")
+styles = BeerData.get_resource("styles")
+elem(styles, 0)
+|> Enum.map( 
+	fn(s) -> 
+		s
+		|> BeerData.get_beers_with_style
+		|> BeerData.print_by_name_and_id
+	end
+)
 
 # # get all the breweries. results are paginated, so get them with key &p=PAGE_NUM
 # IO.puts("\n\nget all the breweries")
