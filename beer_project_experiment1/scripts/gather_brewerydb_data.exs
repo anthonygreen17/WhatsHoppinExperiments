@@ -8,12 +8,18 @@ defmodule BeerData do
 		"?key=b8858d9cead79d462f430e9726080163"
 	end
 
+	def num_brewery_pages() do
+		189
+	end
+
 	@doc """
 	Do a GET request to the specified path, and return the JSON response.
 	"""
 	def get_path(path) do
 		resp = HTTPoison.get!(
 			"#{base_path()}/#{path}/#{api_key()}")
+
+		# result of Poison.decode/1 is (ex:) {:ok, %{"data": ...}}
 		Poison.decode(resp.body)
 		|> elem(1)
 		|> Map.get("data")
@@ -62,6 +68,11 @@ defmodule BeerData do
 		get_path("beers", "styleId", id)
 	end
 
+	def print_brewery_page(brewery_list, page_num) do
+		IO.puts("\n\nPrinting brewery page #{page_num}:")
+		print_by_name_and_id(brewery_list)
+	end
+
 
 end
 
@@ -73,28 +84,37 @@ BeerData.get_path("categories")
 |> BeerData.print_by_name_and_id
 
 
-# get a category by id
-IO.puts("\n\nGet category by id...")
-BeerData.get_by_id("category", 5)
-|> BeerData.print_by_name_and_id
+# # get a category by id
+# IO.puts("\n\nGet category by id...")
+# BeerData.get_by_id("category", 5)
+# |> BeerData.print_by_name_and_id
 
 
-# print all the styles
-IO.puts("\n\nAll styles...")
-styles = BeerData.get_path("styles")
-BeerData.print_by_name_and_id(styles)
+# # print all the styles
+# IO.puts("\n\nAll styles...")
+# styles = BeerData.get_path("styles")
+# BeerData.print_by_name_and_id(styles)
 
-# get a style by ID
-IO.puts("\n\nGet style by id...")
-BeerData.get_by_id("style", 3)
-|> BeerData.print_by_name_and_id
+# # get a style by ID
+# IO.puts("\n\nGet style by id...")
+# BeerData.get_by_id("style", 3)
+# |> BeerData.print_by_name_and_id
 
-# iterate through the styles, printing all of the beers within each style
-Enum.map(styles, 
-	fn(s) -> 
-		s
-		|> BeerData.get_beers_with_style
-		|> BeerData.print_by_name_and_id
-	end
-)
+# # iterate through the styles, printing all of the beers within each style
+# Enum.map(styles, 
+# 	fn(s) -> 
+# 		s
+# 		|> BeerData.get_beers_with_style
+# 		|> BeerData.print_by_name_and_id
+# 	end
+# )
+
+# get all the breweries. results are paginated, so get them with key &p=PAGE_NUM
+IO.puts("\n\nget all the breweries")
+
+for page_num <- 1..BeerData.num_brewery_pages() do
+	BeerData.get_path("breweries", "p", page_num)
+	|> BeerData.print_brewery_page(page_num)
+end
+
 
