@@ -8,6 +8,10 @@ defmodule BeerData do
 		?key=KEY
 	end
 
+	def states() do
+		Application.get_env(:beer_project_experiment1, :states)
+	end
+
 	def num_brewery_pages() do
 		189
 	end
@@ -21,48 +25,36 @@ defmodule BeerData do
 	end
 
 	@doc """
-	Do a GET request to the specified path.
+	Do a GET request to the specified BreweryDB resource (eg. "beer", "brewery", "breweries", etc)
 
 	Return a tuple of the following format:
 
 		{json_result_list, number_of_pages}
 	"""
-	def get_resource(resource) do
-		# result of Poison.decode/1 is (ex:) {:ok, %{"data": [], "numberOfPages": X}}
-		path(resource)
+	def get_resource(brewery_db_resource) do
+		path(brewery_db_resource)
 		|> get_path
-		# |> HTTPoison.get!
-		# |> (fn(resp) -> Poison.decode(resp.body) end).()
-		# |> elem(1)
-		# |> 
-		# (fn(j) -> 
-		# 	{ Map.get(j, "data"), Map.get(j, "numberOfPages", 1) }
-		# end).()
 	end
 
 	@doc """
 	Do a GET request to the specified path, adding the key/value pair after the
 	api_key() with &key=value
 	"""
-	def get_resource(resource, key, value) do
-		path(resource, key, value)
+	def get_resource(brewery_db_resource, key, value) do
+		path(brewery_db_resource, key, value)
 		|> get_path
-		# |> HTTPoison.get!
-		# |> (fn(resp) -> Poison.decode(resp.body) end).()
-		# |> elem(1)
-		# |> 
-		# (fn(j) -> 
-		# 	{ Map.get(j, "data"), Map.get(j, "numberOfPages", 1) } 
-		# end).()
 	end
 
 	@doc """
-	Similar to get_resource/1, except use the passed-in string as the full path.
-	Don't modify it.
+	Using the passed-in string as the full path, perform a GET request and return
+	the result as a tuple with the following form
+
 	"""
+	@spec get_path(String) :: {Map, Integer}
 	def get_path(full_path) do
 		full_path
 		|> HTTPoison.get!
+		# result of Poison.decode/1 is (ex:) {:ok, %{"data": [], "numberOfPages": X}}
 		|> (fn(resp) -> Poison.decode(resp.body) end).()
 		|> elem(1)
 		|> 
@@ -71,6 +63,10 @@ defmodule BeerData do
 		end).()
 	end
 
+
+	@doc """
+	Add a key value piar to the end of the path.
+	"""
 	def add_attr_to_path(path, key, value) do
 		"#{path}&#{key}=#{to_string(value)}"
 	end
@@ -131,8 +127,23 @@ defmodule BeerData do
 		res = get_resource("beers", "styleId", id)
 
 		case num_pages = elem(res, 1) do
-			1 -> res
-			_ -> path("beers", "styleId", id) |> get_all_pages(num_pages)
+			1 -> elem(res, 0)
+			_ -> path("beers", "styleId", id) 
+				 |> get_all_pages(num_pages)
+		end
+	end
+
+	@doc """
+    Get all beers with given style
+	"""
+	def get_beers_with_style_id(id) do
+		IO.puts("\n\nbeers with styleId #{id}:")
+		res = get_resource("beers", "styleId", id)
+
+		case num_pages = elem(res, 1) do
+			1 -> elem(res, 0)
+			_ -> path("beers", "styleId", id) 
+				 |> get_all_pages(num_pages)
 		end
 	end
 
@@ -152,16 +163,22 @@ HTTPoison.start
 
 
 # # get a category by id
-IO.puts("\n\nGet category by id...")
-BeerData.get_by_id("category", 5)
-|> BeerData.print_by_name_and_id
+# IO.puts("\n\nGet category by id...")
+# BeerData.get_by_id("category", 5)
+# |> BeerData.print_by_name_and_id
 
-# # get a style by ID
-IO.puts("\n\nGet style by id...")
-BeerData.get_by_id("style", 3)
-|> BeerData.print_by_name_and_id
+# # # get a style by ID
+# IO.puts("\n\nGet style by id...")
+# BeerData.get_by_id("style", 3)
+# |> BeerData.print_by_name_and_id
 
-# iterate through the styles, printing all of the beers within each style
+# # iterate through the styles, printing all of the beers within each style
+
+# BeerData.get_beers_with_style_id(27)
+# |> (fn(all) 
+# 	-> IO.puts("Beers in this style:#{length all}"); all end).
+# ()
+# |> BeerData.print_by_name_and_id
 IO.puts("\n\nAll styles...")
 styles = BeerData.get_resource("styles")
 elem(styles, 0)
@@ -169,6 +186,9 @@ elem(styles, 0)
 	fn(s) -> 
 		s
 		|> BeerData.get_beers_with_style
+		|> (fn(all) 
+			-> IO.puts("Beers in this style:#{length all}"); all end).
+		()
 		|> BeerData.print_by_name_and_id
 	end
 )
