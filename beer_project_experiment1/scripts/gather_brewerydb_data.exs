@@ -1,10 +1,10 @@
 defmodule BeerData do
 	
-	def base_path() do
+	defp base_path() do
 		"http://api.brewerydb.com/v2"
 	end
 
-	def api_key() do
+	defp api_key() do
 		"?key=b8858d9cead79d462f430e9726080163"
 	end
 
@@ -14,6 +14,11 @@ defmodule BeerData do
 
 	def num_brewery_pages() do
 		189
+	end
+
+	defp is_real_brewery?(%{"name" => name}) do
+		true
+		# !Enum.member?(["Main Brewery", "Main Location", "Main Brewpub"], name)
 	end
 
 	def path(resource, key, value) do
@@ -67,7 +72,7 @@ defmodule BeerData do
 	@doc """
 	Add a key value piar to the end of the path.
 	"""
-	def add_attr_to_path(path, key, value) do
+	defp add_attr_to_path(path, key, value) do
 		"#{path}&#{key}=#{to_string(value)}"
 	end
 
@@ -93,7 +98,7 @@ defmodule BeerData do
 		end)
 	end
 
-	def get_all_pages_helper(acc, path, 1) do
+	defp get_all_pages_helper(acc, path, 1) do
 		new_data = 
 		add_attr_to_path(path, "p", 1)
 		|> get_path
@@ -101,7 +106,7 @@ defmodule BeerData do
 		acc ++ new_data
 	end
 
-	def get_all_pages_helper(acc, path, page_num) do
+	defp get_all_pages_helper(acc, path, page_num) do
 		IO.puts("Getting page #{page_num}")
 		new_data = 
 		add_attr_to_path(path, "p", page_num)
@@ -114,9 +119,22 @@ defmodule BeerData do
 	@doc """
 	Get all pages and wrap into a single list.
 	"""
-	def get_all_pages(path, num_pages) do
+	defp get_all_pages(path, num_pages) do
 		IO.puts("\nstarting to get all pages...")
 		get_all_pages_helper([], path, num_pages)
+	end
+
+	@doc """
+	Consume the result of get_resource or get_path, and get all the pages assocaited
+	with that result, or just return the result if there's only one page.
+
+	Use the "api_path" to complete subsequent requests, if necessary.
+	"""
+	defp maybe_get_all_pages(req_result, api_path) do
+		case num_pages = elem(req_result, 1) do
+			1 -> elem(req_result, 0)
+			_ -> get_all_pages(api_path, num_pages)
+		end
 	end
 
 	@doc """
@@ -124,13 +142,8 @@ defmodule BeerData do
 	"""
 	def get_beers_with_style(%{"name" => name, "id" => id}) do
 		IO.puts("\n\nbeers with style #{name}:")
-		res = get_resource("beers", "styleId", id)
-
-		case num_pages = elem(res, 1) do
-			1 -> elem(res, 0)
-			_ -> path("beers", "styleId", id) 
-				 |> get_all_pages(num_pages)
-		end
+		get_resource("beers", "styleId", id)
+		|> maybe_get_all_pages( path("beers", "styleId", id) )
 	end
 
 	@doc """
@@ -138,18 +151,40 @@ defmodule BeerData do
 	"""
 	def get_beers_with_style_id(id) do
 		IO.puts("\n\nbeers with styleId #{id}:")
-		res = get_resource("beers", "styleId", id)
-
-		case num_pages = elem(res, 1) do
-			1 -> elem(res, 0)
-			_ -> path("beers", "styleId", id) 
-				 |> get_all_pages(num_pages)
-		end
+		get_resource("beers", "styleId", id)
+		|> maybe_get_all_pages( path("beers", "styleId", id) )
 	end
 
 	def print_brewery_page(brewery_list, page_num) do
 		IO.puts("\n\nPrinting brewery page #{page_num}:")
 		print_by_name_and_id(brewery_list)
+	end
+
+	@doc """
+	Get all breweries within a given state. For some reason, only querying by state returns
+	a bunch of offshoots from actual breweries, all names "Main Brewery". We are only interested
+	in main locations (eg. we care about "Trillium", but dont care about 12 other "Main Brewery"
+	locations that are owned by Trillum)
+	"""
+	def get_breweries_in_state(state) do
+		IO.puts("Breweries in #{state}:")
+		api_path = path("locations", "region", state)
+		IO.puts(api_path)
+		get_path(api_path)
+		|> maybe_get_all_pages(api_path)
+		|> Enum.filter(fn(b) -> is_real_brewery?(b) end)
+	end
+
+	@doc """
+	Consumes a list of locations obtained from the "locations" resource, and print out
+	their name as well as the name of the brewery that owns them.
+	"""
+	def print_breweries(locations_list) do
+		Enum.map(locations_list, fn(c) -> 
+			IO.puts(Map.get(c, "name") 
+			<> ", Brewery Name:\n-----------> " 
+			<> to_string(c |> Map.get("brewery") |> Map.get("name")))
+		end)
 	end
 
 end
@@ -173,32 +208,32 @@ HTTPoison.start
 # |> BeerData.print_by_name_and_id
 
 # # iterate through the styles, printing all of the beers within each style
+# # NOTE: this is a LOT of styles...
 
-# BeerData.get_beers_with_style_id(27)
-# |> (fn(all) 
-# 	-> IO.puts("Beers in this style:#{length all}"); all end).
-# ()
-# |> BeerData.print_by_name_and_id
-IO.puts("\n\nAll styles...")
-styles = BeerData.get_resource("styles")
-elem(styles, 0)
-|> Enum.map( 
-	fn(s) -> 
+# IO.puts("\n\nAll styles...")
+# styles = BeerData.get_resource("styles")
+# elem(styles, 0)
+# |> Enum.map( 
+# 	fn(s) -> 
+# 		s
+# 		|> BeerData.get_beers_with_style
+# 		|> (fn(all) 
+# 			-> IO.puts("Beers in this style:#{length all}"); all end).()
+# 		|> BeerData.print_by_name_and_id
+# 	end
+# )
+
+# # get all the breweries within each state
+
+BeerData.states()
+|> Enum.map(
+	fn(s) ->
 		s
-		|> BeerData.get_beers_with_style
+		|> BeerData.get_breweries_in_state
 		|> (fn(all) 
-			-> IO.puts("Beers in this style:#{length all}"); all end).
-		()
-		|> BeerData.print_by_name_and_id
+			-> IO.puts("Breweries in this state:#{length all}"); all end).()
+		|> BeerData.print_breweries
 	end
 )
-
-# # get all the breweries. results are paginated, so get them with key &p=PAGE_NUM
-# IO.puts("\n\nget all the breweries")
-
-# for page_num <- 1..BeerData.num_brewery_pages() do
-# 	BeerData.get_path("breweries", "p", page_num)
-# 	|> BeerData.print_brewery_page(page_num)
-# end
 
 
