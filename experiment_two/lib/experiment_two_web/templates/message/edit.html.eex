@@ -1,5 +1,0 @@
-<h2>Edit Message</h2>
-
-<%= render "form.html", Map.put(assigns, :action, message_path(@conn, :update, @message)) %>
-
-<span><%= link "Back", to: style_path(@conn, :show, @message.style_id) %></span>
