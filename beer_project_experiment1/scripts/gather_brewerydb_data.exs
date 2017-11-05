@@ -12,15 +12,6 @@ defmodule BeerData do
 		Application.get_env(:beer_project_experiment1, :states)
 	end
 
-	def num_brewery_pages() do
-		189
-	end
-
-	defp is_real_brewery?(%{"name" => name}) do
-		true
-		# !Enum.member?(["Main Brewery", "Main Location", "Main Brewpub"], name)
-	end
-
 	def path(resource, key, value) do
 		"#{base_path()}/#{resource}/#{api_key()}&#{key}=#{to_string((value))}"
 	end
@@ -31,11 +22,8 @@ defmodule BeerData do
 
 	@doc """
 	Do a GET request to the specified BreweryDB resource (eg. "beer", "brewery", "breweries", etc)
-
-	Return a tuple of the following format:
-
-		{json_result_list, number_of_pages}
 	"""
+	@spec get_resource(String) :: {Map, Integer}
 	def get_resource(brewery_db_resource) do
 		path(brewery_db_resource)
 		|> get_path
@@ -45,6 +33,7 @@ defmodule BeerData do
 	Do a GET request to the specified path, adding the key/value pair after the
 	api_key() with &key=value
 	"""
+	@spec get_resource(String, String, String) :: {Map, Integer}
 	def get_resource(brewery_db_resource, key, value) do
 		path(brewery_db_resource, key, value)
 		|> get_path
@@ -98,6 +87,9 @@ defmodule BeerData do
 		end)
 	end
 
+	@doc """
+	Base case for get_all_pages_helper
+	"""
 	defp get_all_pages_helper(acc, path, 1) do
 		new_data = 
 		add_attr_to_path(path, "p", 1)
@@ -106,6 +98,10 @@ defmodule BeerData do
 		acc ++ new_data
 	end
 
+	@doc """
+	Get all pages for a specific resource, using an accumulator to return a single list of
+	objects found in pages [@page_num, 1]
+	"""
 	defp get_all_pages_helper(acc, path, page_num) do
 		IO.puts("Getting page #{page_num}")
 		new_data = 
@@ -172,7 +168,6 @@ defmodule BeerData do
 		IO.puts(api_path)
 		get_path(api_path)
 		|> maybe_get_all_pages(api_path)
-		|> Enum.filter(fn(b) -> is_real_brewery?(b) end)
 	end
 
 	@doc """
@@ -225,15 +220,15 @@ HTTPoison.start
 
 # # get all the breweries within each state
 
-BeerData.states()
-|> Enum.map(
-	fn(s) ->
-		s
-		|> BeerData.get_breweries_in_state
-		|> (fn(all) 
-			-> IO.puts("Breweries in this state:#{length all}"); all end).()
-		|> BeerData.print_breweries
-	end
-)
+# BeerData.states()
+# |> Enum.map(
+# 	fn(s) ->
+# 		s
+# 		|> BeerData.get_breweries_in_state
+# 		|> (fn(all) 
+# 			-> IO.puts("Breweries in this state:#{length all}"); all end).()
+# 		|> BeerData.print_breweries
+# 	end
+# )
 
 
