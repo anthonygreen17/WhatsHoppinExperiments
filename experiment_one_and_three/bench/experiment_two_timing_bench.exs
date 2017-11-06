@@ -1,8 +1,13 @@
 # bench/basic_bench.exs
 defmodule BasicBench do
 
-	Code.load_file("gather_brewerydb_data.exs", "scripts")
+	Code.load_file("gather_brewerydb_data.ex", "scripts")
 	use Benchfella
+
+	setup_all do
+	    HTTPoison.start
+	    {:ok, :ok}
+    end
 
 
 	#####################################################################################
