@@ -12,6 +12,11 @@
 // If you no longer want to use a dependency, remember
 // to also remove its path from "config.paths.watched".
 import "phoenix_html"
+import socket from "./socket"
+
+"use strict";
+
+let handlebars = require("handlebars");
 
 // Import local files
 //

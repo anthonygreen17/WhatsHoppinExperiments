@@ -1,62 +1,108 @@
-// NOTE: The contents of this file will only be executed if
-// you uncomment its entry in "assets/js/app.js".
-
-// To use Phoenix channels, the first step is to import Socket
-// and connect at the socket path in "lib/web/endpoint.ex":
 import {Socket} from "phoenix"
+export default socket
 
 let socket = new Socket("/socket", {params: {token: window.userToken}})
 
-// When you connect, you'll often need to authenticate the client.
-// For example, imagine you have an authentication plug, `MyAuth`,
-// which authenticates the session and assigns a `:current_user`.
-// If the current user exists you can assign the user's token in
-// the connection for use in the layout.
-//
-// In your "lib/web/router.ex":
-//
-//     pipeline :browser do
-//       ...
-//       plug MyAuth
-//       plug :put_user_token
-//     end
-//
-//     defp put_user_token(conn, _) do
-//       if current_user = conn.assigns[:current_user] do
-//         token = Phoenix.Token.sign(conn, "user socket", current_user.id)
-//         assign(conn, :user_token, token)
-//       else
-//         conn
-//       end
-//     end
-//
-// Now you need to pass this token to JavaScript. You can do so
-// inside a script tag in "lib/web/templates/layout/app.html.eex":
-//
-//     <script>window.userToken = "<%= assigns[:user_token] %>";</script>
-//
-// You will need to verify the user token in the "connect/2" function
-// in "lib/web/channels/user_socket.ex":
-//
-//     def connect(%{"token" => token}, socket) do
-//       # max_age: 1209600 is equivalent to two weeks in seconds
-//       case Phoenix.Token.verify(socket, "user socket", token, max_age: 1209600) do
-//         {:ok, user_id} ->
-//           {:ok, assign(socket, :user, user_id)}
-//         {:error, reason} ->
-//           :error
-//       end
-//     end
-//
-// Finally, pass the token on connect as below. Or remove it
-// from connect if you don't care about authentication.
-
 socket.connect()
 
-// Now that you are connected, you can join channels with a topic:
-let channel = socket.channel("topic:subtopic", {})
-channel.join()
-  .receive("ok", resp => { console.log("Joined successfully", resp) })
-  .receive("error", resp => { console.log("Unable to join", resp) })
+let subtopic = $('h2#style-name').data('style-id');
 
-export default socket
+function channel_init() {
+	if ($('body').data('page') != "StyleView/show") {
+		return; // wrong page
+	}
+
+	let chan = socket.channel("updates:" + subtopic, {});
+	let submitButtonObject = $("a#submit-button");
+	let submitButton = submitButtonObject[0];
+	let deleteButtons = $('.delete-button');
+	let editButtons = $('.edit-button');
+
+	chan.join(chan)
+	  .receive("ok", resp => { console.log('Joined channel ' + subtopic + ' successfully', resp) })
+	  .receive("error", resp => { console.log('Unable to join', resp) })
+
+	// receive from channel
+	chan.on("message", got_message);
+	chan.on("delete", got_delete);
+	chan.on("update", got_update);
+
+	// event listener for making a new message
+	submitButton.addEventListener("click", send_message(chan, submitButtonObject));
+
+	// event listeners for deleting messages
+	Array.from(deleteButtons).forEach(function(element) {
+      element.addEventListener('click', delete_message(chan, element.id));
+  });
+
+  // event listeners for editing messages
+  Array.from(editButtons).forEach(function(element) {
+  	element.addEventListener('click', edit_message(chan, '#' + element.id));
+  });
+}
+
+$(channel_init);
+
+function got_message(msg) {
+	if (msg.style_id == subtopic) {
+		$('tbody').prepend('<tr><td>' + msg.content
+			+ '</td><td><span><a href="#" id="edit-' + msg.id + '"></a></span></td><tr>');
+	}
+}
+
+function got_delete(msg) {
+	if (msg.style_id == subtopic) {
+		$('#delete-' + msg.id).parent().parent().parent().remove();
+	}
+}
+
+function got_update(msg) {
+	if (msg.style_id == subtopic) {
+		$('#edit-' + msg.id).parent().parent().parent()[0].children[0].firstChild.nodeValue = msg.content;
+	}
+}
+
+function send_message(chan, button) {
+	return function() {
+		content = $('#message_content')[0].value;
+		if(content && content.length) {
+			chan.push("message",
+								{content: content,
+		     				 style_id: subtopic});
+			$('#message_content').val('');
+		}
+	}
+}
+
+function delete_message(chan, id) {
+	return function() {
+		chan.push("delete", {id: parseInt(id.substring(7)),
+		                     style_id: subtopic});
+	};
+}
+
+function edit_message(chan, id) {
+	return function() {
+		let rowElement = $(id).parent().parent().parent();
+		let childElement = rowElement.children()[0];
+
+		if($(id).text() === "Edit") {
+			let input = '<td><input type="text" value="'
+			            + childElement.firstChild.nodeValue
+			            + '"></td>'
+			childElement.remove();
+			rowElement.prepend(input);
+			$(id).text('Update');
+		}
+		else {
+			let content = childElement.firstChild.value;
+			$(id).text('Edit');
+			chan.push("update", {id: parseInt(id.substring(6)),
+			                     content: content,
+			                     style_id: subtopic});
+
+			childElement.remove();
+			rowElement.prepend('<td>' + content + '</td>');
+		}
+	};
+}

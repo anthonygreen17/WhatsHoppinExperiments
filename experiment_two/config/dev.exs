@@ -51,8 +51,8 @@ config :phoenix, :stacktrace_depth, 20
 # Configure your database
 config :experiment_two, ExperimentTwo.Repo,
   adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
+  username: "whats_hoppin",
+  password: "Ephohl3Uco",
   database: "experiment_two_dev",
   hostname: "localhost",
   pool_size: 10
