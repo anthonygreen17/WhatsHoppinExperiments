@@ -1,11 +1,11 @@
 defmodule BeerData do
 	
-	def base_path() do
+	defp base_path() do
 		"http://api.brewerydb.com/v2"
 	end
 
-	def api_key() do
-		?key=KEY
+	defp api_key() do
+		Application.get_env(:beer_project_experiment1, :api_key)
 	end
 
 	def states() do
@@ -149,13 +149,8 @@ defmodule BeerData do
 	"""
 	def get_beers_with_style(%{"name" => name, "id" => id}) do
 		IO.puts("\n\nbeers with style #{name}:")
-		res = get_resource("beers", "styleId", id)
-
-		case num_pages = elem(res, 1) do
-			1 -> elem(res, 0)
-			_ -> path("beers", "styleId", id) 
-				 |> get_all_pages(num_pages)
-		end
+		get_resource("beers", "styleId", id)
+		|> maybe_get_all_pages( path("beers", "styleId", id) )
 	end
 
 	@doc """
@@ -163,13 +158,8 @@ defmodule BeerData do
 	"""
 	def get_beers_with_style_id(id) do
 		IO.puts("\n\nbeers with styleId #{id}:")
-		res = get_resource("beers", "styleId", id)
-
-		case num_pages = elem(res, 1) do
-			1 -> elem(res, 0)
-			_ -> path("beers", "styleId", id) 
-				 |> get_all_pages(num_pages)
-		end
+		get_resource("beers", "styleId", id)
+		|> maybe_get_all_pages( path("beers", "styleId", id) )
 	end
 
 	def print_brewery_page(brewery_list, page_num) do
@@ -281,11 +271,4 @@ BeerData.get_resource_all_pages("beers", "styleId", 19)
 # 	end
 # )
 
-# # get all the breweries. results are paginated, so get them with key &p=PAGE_NUM
-# IO.puts("\n\nget all the breweries")
-
-# for page_num <- 1..BeerData.num_brewery_pages() do
-# 	BeerData.get_path("breweries", "p", page_num)
-# 	|> BeerData.print_brewery_page(page_num)
-# end
 

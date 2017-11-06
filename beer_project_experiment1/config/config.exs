@@ -115,3 +115,4 @@ config :beer_project_experiment1,
 		'Wyoming'
 	]
 
+import_config "secret.exs"
