@@ -160,6 +160,10 @@ defmodule ExperimentTwo.Beer do
     |> Repo.insert()
   end
 
+  def get_latest_id!() do
+    Repo.one(from m in Message, order_by: [desc: m.id], limit: 1, select: m.id)
+  end
+
   @doc """
   Updates a message.
 

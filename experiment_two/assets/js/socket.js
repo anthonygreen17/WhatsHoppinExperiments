@@ -19,8 +19,8 @@ function channel_init() {
 	let editButtons = $('.edit-button');
 
 	chan.join(chan)
-	  .receive("ok", resp => { console.log("Joined successfully", resp) })
-	  .receive("error", resp => { console.log("Unable to join", resp) })
+	  .receive("ok", resp => { console.log('Joined channel ' + subtopic + ' successfully', resp) })
+	  .receive("error", resp => { console.log('Unable to join', resp) })
 
 	// receive from channel
 	chan.on("message", got_message);
@@ -45,7 +45,8 @@ $(channel_init);
 
 function got_message(msg) {
 	if (msg.style_id == subtopic) {
-		$('tbody').prepend('<tr><td>' + msg.content + '</td><td></td><tr>');
+		$('tbody').prepend('<tr><td>' + msg.content
+			+ '</td><td><span><a href="#" id="edit-' + msg.id + '"></a></span></td><tr>');
 	}
 }
 

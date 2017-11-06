@@ -18,6 +18,8 @@ defmodule ExperimentTwoWeb.UpdatesChannel do
 
   def handle_in("message", payload, socket) do
     Beer.create_message(payload)
+    new_message_id = Beer.get_latest_id!()
+    payload = Map.put(payload, :id, new_message_id)
     broadcast socket, "message", payload
     {:noreply, socket}
   end
