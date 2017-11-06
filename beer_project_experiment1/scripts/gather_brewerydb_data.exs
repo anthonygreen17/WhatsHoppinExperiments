@@ -5,7 +5,19 @@ defmodule BeerData do
 	end
 
 	defp api_key() do
-		"?key=b8858d9cead79d462f430e9726080163"
+		Application.get_env(:beer_project_experiment1, :api_key)
+	end
+
+	def states() do
+		Application.get_env(:beer_project_experiment1, :states)
+	end
+
+	def path(resource, key, value) do
+		"#{base_path()}/#{resource}/#{api_key()}&#{key}=#{to_string((value))}"
+	end
+
+	def path(resource) do
+		"#{base_path()}/#{resource}/#{api_key()}"
 	end
 
 	def states() do
@@ -215,6 +227,7 @@ BeerData.get_resource_all_pages("styles")
 # The API does not accept filtering styes by categoryId, so we'll have to do it manually
 # on our end
 get_cat_id = 11
+
 IO.puts("\n\nStyles with category ID #{get_cat_id}...")
 BeerData.get_resource_all_pages("styles")
 |> Enum.filter(fn(style) -> 
@@ -228,7 +241,6 @@ BeerData.get_resource_all_pages("beers", "styleId", 19)
 |> (fn(all) -> 
 	IO.puts("----->Beers in this style: #{length all}"); all end).()
 |> BeerData.print_by_name_and_id
-
 
 # # get a category by id
 # IO.puts("\n\nGet category by id...")

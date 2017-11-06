@@ -38,7 +38,7 @@ Other notes:
 
 
 get a certain category:
-http://api.brewerydb.com/v2/category/5/?key=b8858d9cead79d462f430e9726080163
+http://api.brewerydb.com/v2/category/5/?key=KEY
 
 get all categories:
 
