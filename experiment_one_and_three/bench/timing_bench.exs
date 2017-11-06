@@ -4,6 +4,11 @@ defmodule BasicBench do
 	Code.load_file("gather_brewerydb_data.exs", "scripts")
 	use Benchfella
 
+	setup_all do
+	    HTTPoison.start
+	    {:ok, :ok}
+    end
+
 
 	#####################################################################################
 	# These first few tests are to compare the time it takes to make HTTP requests to
