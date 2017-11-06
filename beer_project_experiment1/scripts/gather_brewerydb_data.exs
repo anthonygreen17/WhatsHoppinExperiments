@@ -20,18 +20,6 @@ defmodule BeerData do
 		"#{base_path()}/#{resource}/#{api_key()}"
 	end
 
-	def states() do
-		Application.get_env(:beer_project_experiment1, :states)
-	end
-
-	def path(resource, key, value) do
-		"#{base_path()}/#{resource}/#{api_key()}&#{key}=#{to_string((value))}"
-	end
-
-	def path(resource) do
-		"#{base_path()}/#{resource}/#{api_key()}"
-	end
-
 	@doc """
 	Do a GET request to the specified BreweryDB resource (eg. "beer", "brewery", "breweries", etc)
 	"""
