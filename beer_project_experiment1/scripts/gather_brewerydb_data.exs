@@ -215,12 +215,11 @@ BeerData.get_resource_all_pages("styles")
 # The API does not accept filtering styes by categoryId, so we'll have to do it manually
 # on our end
 get_cat_id = 11
-IO.puts("\n\Styles with category ID #{get_cat_id}...")
+IO.puts("\n\nStyles with category ID #{get_cat_id}...")
 BeerData.get_resource_all_pages("styles")
 |> Enum.filter(fn(style) -> 
 	Map.get(style, "categoryId") == get_cat_id end) 
 |> BeerData.print_by_name_and_id
-
 
 # get all beers within a style
 # This is an operation we'll need to do frequently in our app
@@ -229,7 +228,6 @@ BeerData.get_resource_all_pages("beers", "styleId", 19)
 |> (fn(all) -> 
 	IO.puts("----->Beers in this style: #{length all}"); all end).()
 |> BeerData.print_by_name_and_id
-
 
 
 # # get a category by id
