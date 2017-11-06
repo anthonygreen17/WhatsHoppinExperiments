@@ -64,7 +64,7 @@ function got_update(msg) {
 
 function send_message(chan, button) {
 	return function() {
-		content = $('#message_content')[0].value;
+		content = $('#message-content')[0].value;
 		if(content && content.length) {
 			chan.push("message",
 								{content: content,

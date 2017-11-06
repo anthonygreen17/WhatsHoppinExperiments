@@ -1,21 +1,17 @@
 <h2 id="style-name" data-style-id="<%= @style.id %>"><%= @style.name %></h2>
 <br>
+
 <h4>New Message</h4>
-<%= form_for @message, message_path(@conn, :create), fn f -> %>
-  <div class="form-group">
-    <%= text_input f, :content, class: "form-control" %>
-    <%= error_tag f, :content %>
-  </div>
-
-  <%= hidden_input f, :style_id, value: @style.id %>
-
-  <div class="form-group">
-      <%= link "Submit", to: "#",
-                         class: "btn btn-primary submit-button",
-                         id: "submit-button",
-                         data_style_id: @style.id%>
-  </div>
-<% end %>
+<%# New messages will be created in JavaScript, not with a form %>
+<div class="form-group">
+  <input type="text" class="form-control" id="message-content">
+</div>
+<div class="form-group">
+    <%= link "Submit", to: "#",
+                       class: "btn btn-primary submit-button",
+                       id: "submit-button",
+                       data_style_id: @style.id%>
+</div>
 
 <table class="table">
   <tbody id="table-body">
