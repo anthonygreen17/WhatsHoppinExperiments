@@ -1,10 +1,15 @@
-Code.load_file("gather_brewerydb_data.exs", "scripts")
-HTTPoison.start
-
 #########################################################################################
 # For demonstration puposes, here are examples of API calls that we'll need to do
 # our application.
+#
+# NOTE: The actual functionality is contained in scripts/gather_brewerydb_data.ex
+#
 #########################################################################################
+
+
+# this file contains the actual code for making these requests
+Code.load_file("gather_brewerydb_data.ex", "scripts")
+HTTPoison.start
 
 # print all the categories
 IO.puts("\n\nAll categories...")
@@ -15,13 +20,11 @@ BeerData.get_resource_all_pages("categories")
 IO.puts("\n\nAll styles...")
 BeerData.get_resource_all_pages("styles")
 |> BeerData.print_by_name_and_id
-
-
+`
 # get a style by categoryId
 # The API does not accept filtering styes by categoryId, so we'll have to do it manually
 # on our end
 get_cat_id = 11
-
 IO.puts("\n\nStyles with category ID #{get_cat_id}...")
 BeerData.get_resource_all_pages("styles")
 |> Enum.filter(fn(style) -> 
@@ -47,7 +50,8 @@ BeerData.get_by_id("style", 3)
 |> BeerData.print_by_name_and_id
 
 # # iterate through the styles, printing all of the beers within each style
-# # NOTE: this is a LOT of beers...
+# # NOTE: this takes FOREVER essentialy (there's ~100,000 beers)
+# # ...uncomment at your own risk :)
 
 # IO.puts("\n\nAll styles...")
 # styles = BeerData.get_resource("styles")
@@ -63,7 +67,7 @@ BeerData.get_by_id("style", 3)
 # )
 
 # # get all the breweries within each state
-# # NOTE: this takes FOREVER essentialy
+# # NOTE: this takes ALMOST FOREVER...uncomment at your own risk :)
 
 # BeerData.states()
 # |> Enum.map(
