@@ -1,0 +1,117 @@
+
+
+3. Data Design
+
+As a result of Experiment 2 (read below), we have decided to store much of
+the breweryDB data in our application's database. Here are the schema that we'll
+need in order to support our application and facilitate straightforward data
+processing in our backend:
+
+Style:
+	- styleId    (int -> so we can get beers by styleId)
+	# the following are all strings in the database - we chose to follow that
+	# these are all purely for informational purposes
+	- name       (string)
+	- ibuMin     (string)
+	- ibuMax     (string)
+	- abvMin     (string)
+	- abvMax     (string)
+
+
+Categories:
+	- categoryId (int -> needed so we can get styles by categoryId)
+	- name       (string -> description of style)
+
+Brewery:
+	- name             (string -> go inside "brewery" field in location object)
+	- website          (string)
+	- locality         (string -> city in which brewery is located)
+	- region 	       (string -> state in which the brewery is located)
+	- established_date (int)
+	- isMassOwned?     (bool - eg. is this a "Budweiser" type brewery?)
+	- locationType     (string eg. "micro", "macro", "brewPub")
+	- breweryId        (string -> so we can use it to get all beers that a brewery produces)
+
+
+
+5. Experiments
+
+Experiment 1:
+
+NOTE: lives in "scripts/experiment_one.exs" as well as "scripts/gather_brewerydb_data.ex"
+and can be run with:
+
+	mix run scripts/experiment_one.exs
+
+As a first experiment, we investigated the proper way to hit the breweryDB
+API in order to gather the data that we need to support our application. We
+found that some filtering was trivial (eg. to get beers by styleId=11,
+do a GET to "beers/$API_KEY&styleId=11" in a URL query string type fashion),
+and we found that other filtering would need to be done manually -> eg. getting
+all styles within a category must look like this:
+
+BeerData.get_resource_all_pages("styles")
+|> Enum.filter(fn(style) -> 
+	Map.get(style, "categoryId") == get_cat_id end)
+
+The end result is that we've got a bunch of abstracted functions that allow
+us to hit the API in every way that we need, while remaining concise. We dug
+through the API documentation to figure out exactly what fields we need and
+don't need, and discovered correct ways to filter for every key necessary
+in our application.
+
+As an added bonus, we put our API key in a secret.exs config file, which
+allows us to hide our API key (.gitignore contains "secret.exs") so we
+don't have to commit them to github.
+
+
+Experiment 3:
+
+NOTE: lives in "bench/experiment_two_timing_bench.exs" and can be run with:
+
+	mix bench
+
+after running "mix deps.get" in order to fetch "benchfella" dependency.
+
+While running the first experiment, we noticed that many of the API calls to
+breweryDB appeared to be EXTREMELY slow. Much slower than any HTTP request
+should be. We thought that this may have been partially due to the processing
+that we need to do when getting several pages of data (append onto a larger and
+larger list with each additional page gathered - each list object is large)
+so that was one driving factor for this experiment. Another factor was that,
+depending on how long these vital HTTP requests actually take, that would decide
+whether or not we can allow each page load by the user to make these HTTP
+requests (and if so, can we render all data at once or do we need to paginate),
+or if the long HTTP response time could force us to have to save data statically.
+
+
+After running "mix bench", one can see that the data processing is not the
+culprit of the long response times. Plain HTTP GETs to the breweryDB API 
+with no processing usually take somewhere around 300-400ms, and can sometimes
+take upwards of 500ms (a comparison with "github.com" and "redhat.com" are shown
+as a reference). For the state with the most breweries (CA -> ~ 1000),
+this means that we would need to paginate breweries into 20 pages AND each page
+would need upwards of 500ms to load.
+
+This is bad. As a result of these findings, we are going to leverage the script
+written for experiment 1 in order to gather data a predefined intervals and
+create/update records in our database. We will use a cron job on our production
+server for this. This way, the user will enjoy the fast query times of our database
+compared to the slow load times that they would see if their page navigation 
+triggered API calls.
+
+
+
+6. Project Status
+
+In terms of gathering/processing data, the only major change that has been made is that
+we plan to store the most important pieces of data in our local database to avoid the
+huge HTTP request delays that we outlined in experiment 3.
+
+Our concept has changed a little. We originally proposed that the user would browse down
+from "Category" -> "Style" -> "Beer" -> "Beer Chatroom", meaning that each beer would have
+its own specific chatroom. Once we found that styles could have upwards of 10,000 beers
+within, we decided that it's better to have chatrooms for Styles - with 5000
+chatrooms within a style, that chance that any 2 users are in the same chat at the same
+time greatly decreases. Inside this Style chatroom, we will have a side bar of some sort
+with a handful of random beers from within that style (obtained from API).
