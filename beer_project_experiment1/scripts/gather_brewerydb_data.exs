@@ -30,6 +30,17 @@ defmodule BeerData do
 	end
 
 	@doc """
+	Same as above, but get every page of associated content
+	"""
+	@spec get_resource(String, String, String) :: {Map, Integer}
+	def get_resource_all_pages(brewery_db_resource) do
+		api_path = path(brewery_db_resource)
+		api_path
+		|> get_path
+		|> maybe_get_all_pages(api_path)
+	end
+
+	@doc """
 	Do a GET request to the specified path, adding the key/value pair after the
 	api_key() with &key=value
 	"""
@@ -37,6 +48,17 @@ defmodule BeerData do
 	def get_resource(brewery_db_resource, key, value) do
 		path(brewery_db_resource, key, value)
 		|> get_path
+	end
+
+	@doc """
+	Same as above, but get every page of associated content
+	"""
+	@spec get_resource(String, String, String) :: {Map, Integer}
+	def get_resource_all_pages(brewery_db_resource, key, value) do
+		api_path = path(brewery_db_resource, key, value)
+		api_path
+		|> get_path
+		|> maybe_get_all_pages(api_path)
 	end
 
 	@doc """
@@ -59,7 +81,7 @@ defmodule BeerData do
 
 
 	@doc """
-	Add a key value piar to the end of the path.
+	Add a key value pair to the end of the path.
 	"""
 	def add_attr_to_path(path, key, value) do
 		"#{path}&#{key}=#{to_string(value)}"
@@ -87,9 +109,7 @@ defmodule BeerData do
 		end)
 	end
 
-	@doc """
-	Base case for get_all_pages_helper
-	"""
+	# Base case for get_all_pages_helper
 	defp get_all_pages_helper(acc, path, 1) do
 		new_data = 
 		add_attr_to_path(path, "p", 1)
@@ -98,12 +118,9 @@ defmodule BeerData do
 		acc ++ new_data
 	end
 
-	@doc """
-	Get all pages for a specific resource, using an accumulator to return a single list of
-	objects found in pages [@page_num, 1]
-	"""
+	# Get all pages for a specific resource, using an accumulator to return a single list of
+	# objects found in pages [@page_num, 1]
 	defp get_all_pages_helper(acc, path, page_num) do
-		IO.puts("Getting page #{page_num}")
 		new_data = 
 		add_attr_to_path(path, "p", page_num)
 		|> get_path
@@ -112,12 +129,19 @@ defmodule BeerData do
 		get_all_pages_helper(acc, path, page_num - 1)
 	end
 
-	@doc """
-	Get all pages and wrap into a single list.
-	"""
-	def get_all_pages(path, num_pages) do
-		IO.puts("\nstarting to get all pages...")
+	# Get all pages and wrap into a single list.
+	defp get_all_pages(path, num_pages) do
 		get_all_pages_helper([], path, num_pages)
+	end
+
+	# Consume the result of get_resource or get_path, and get all the pages assocaited
+	# with that result, or just return the result if there's only one page.
+	# Use the "api_path" to complete subsequent requests, if necessary.
+	defp maybe_get_all_pages(req_result, api_path) do
+		case num_pages = elem(req_result, 1) do
+			1 -> elem(req_result, 0)
+			_ -> get_all_pages(api_path, num_pages)
+		end
 	end
 
 	@doc """
@@ -160,9 +184,7 @@ defmodule BeerData do
 	locations that are owned by Trillum)
 	"""
 	def get_breweries_in_state(state) do
-		IO.puts("Breweries in #{state}:")
 		api_path = path("locations", "region", state)
-		IO.puts(api_path)
 		get_path(api_path)
 		|> maybe_get_all_pages(api_path)
 	end
@@ -183,10 +205,41 @@ end
 
 HTTPoison.start
 
-# # first, print all the categories
-# IO.puts("\n\nAll categories...")
-# BeerData.get_resource("categories")
-# |> BeerData.print_by_name_and_id
+#########################################################################################
+# For demonstration puposes, here are examples of API calls that we'll need to do
+# our application.
+#########################################################################################
+
+# print all the categories
+IO.puts("\n\nAll categories...")
+BeerData.get_resource_all_pages("categories")
+|> BeerData.print_by_name_and_id
+
+# get all styles - this one will be paginated
+IO.puts("\n\nAll styles...")
+BeerData.get_resource_all_pages("styles")
+|> BeerData.print_by_name_and_id
+
+
+# get a style by categoryId
+# The API does not accept filtering styes by categoryId, so we'll have to do it manually
+# on our end
+get_cat_id = 11
+IO.puts("\n\Styles with category ID #{get_cat_id}...")
+BeerData.get_resource_all_pages("styles")
+|> Enum.filter(fn(style) -> 
+	Map.get(style, "categoryId") == get_cat_id end) 
+|> BeerData.print_by_name_and_id
+
+
+# get all beers within a style
+# This is an operation we'll need to do frequently in our app
+IO.puts("\n\nBeers with styleId 19...")
+BeerData.get_resource_all_pages("beers", "styleId", 19)
+|> (fn(all) -> 
+	IO.puts("----->Beers in this style: #{length all}"); all end).()
+|> BeerData.print_by_name_and_id
+
 
 
 # # get a category by id
@@ -200,7 +253,7 @@ HTTPoison.start
 # |> BeerData.print_by_name_and_id
 
 # # iterate through the styles, printing all of the beers within each style
-# # NOTE: this is a LOT of styles...
+# # NOTE: this is a LOT of beers...
 
 # IO.puts("\n\nAll styles...")
 # styles = BeerData.get_resource("styles")
