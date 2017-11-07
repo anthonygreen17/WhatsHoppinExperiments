@@ -9,9 +9,10 @@ processing in our backend:
 
 Style:
 	- styleId    (int -> so we can get beers by styleId)
-	# the following are all strings in the database - we chose to follow that
+	- Category   (belongs_to -> there are many styles within a category)
+	- name       (string -> eg. "American IPA")
+	# the following are all strings in the database - we chose to follow that method
 	# these are all purely for informational purposes
-	- name       (string)
 	- ibuMin     (string)
 	- ibuMax     (string)
 	- abvMin     (string)
@@ -20,18 +21,23 @@ Style:
 
 Categories:
 	- categoryId (int -> needed so we can get styles by categoryId)
+ 	- Style      (has_many)
 	- name       (string -> description of style)
 
 Brewery:
-	- name             (string -> go inside "brewery" field in location object)
-	- website          (string)
-	- locality         (string -> city in which brewery is located)
-	- region 	       (string -> state in which the brewery is located)
-	- established_date (int)
-	- isMassOwned?     (bool - eg. is this a "Budweiser" type brewery?)
-	- locationType     (string eg. "micro", "macro", "brewPub")
+	- name             (string)
+	- website          (string -> url of the brewery's website)
+	- city             (string -> city in which brewery is located)
+	- state 	       (string -> state in which the brewery is located)
+	- established_date (int    -> year the brewery was established)
+	- isMassOwned?     (bool   -> eg. is this a "Budweiser" type brewery?)
+	- locationType     (string -> eg. "micro", "macro", "brewPub")
 	- breweryId        (string -> so we can use it to get all beers that a brewery produces)
 
+NOTE: We don't need to store beers locally since our appplication is designed to query the API
+for a handful of random beers that are within a style or that are made by a brewery (for style
+and brewery chatrooms, respectively). Querying the API for handful of beers is less expensive
+than other API requests so its reasonable to do this. 
 
 
 5. Experiments
@@ -107,11 +113,3 @@ triggered API calls.
 In terms of gathering/processing data, the only major change that has been made is that
 we plan to store the most important pieces of data in our local database to avoid the
 huge HTTP request delays that we outlined in experiment 3.
-
-Our concept has changed a little. We originally proposed that the user would browse down
-from "Category" -> "Style" -> "Beer" -> "Beer Chatroom", meaning that each beer would have
-its own specific chatroom. Once we found that styles could have upwards of 10,000 beers
-within, we decided that it's better to have chatrooms for Styles - with 5000
-chatrooms within a style, that chance that any 2 users are in the same chat at the same
-time greatly decreases. Inside this Style chatroom, we will have a side bar of some sort
-with a handful of random beers from within that style (obtained from API).
